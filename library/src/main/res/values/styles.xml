@@ -24,6 +24,7 @@
         <item name="bs_titleTextAppearance">@style/Text.Headline</item>
         <item name="bs_listItemTitleTextAppearance">@style/Text.Title</item>
         <item name="bs_gridItemTitleTextAppearance">@style/Text.Hint</item>
+        <item name="bs_showCapDivider">true</item>
     </style>
 
     <style name="BottomSheet.Dialog.Dark" parent="BottomSheet.Dialog">

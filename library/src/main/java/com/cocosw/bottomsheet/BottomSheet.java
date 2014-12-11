@@ -58,6 +58,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
 
 	private int columnNum = 1;
 	private int mStatusBarHeight;
+	private View capDivider;
 	private GridView list;
 	private List<MenuItem> menuItem;
 	private BaseAdapter adapter;
@@ -258,6 +259,9 @@ public class BottomSheet extends Dialog implements DialogInterface {
 			title.setVisibility(View.VISIBLE);
 			title.setText(builder.title);
 		}
+
+		capDivider = mDialogView.findViewById(R.id.capDivider);
+		capDivider.setVisibility(builder.isShowCapDivider() ? View.VISIBLE : View.GONE);
 
 		icon = (ImageView) mDialogView.findViewById(R.id.bottom_sheet_title_image);
 		if (builder.icon == null)
@@ -508,6 +512,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
 		private final ArrayList<MenuItem> menuItems = new ArrayList<>();
 		private CharSequence title;
 		private boolean grid;
+		private boolean showCapDivider;
 		private OnClickListener listener;
 		private OnDismissListener dismissListener;
 		private Drawable icon;
@@ -532,10 +537,11 @@ public class BottomSheet extends Dialog implements DialogInterface {
 
 			TypedArray a = context.obtainStyledAttributes(theme,
 					new int[]{R.attr.bs_listItemTitleTextAppearance,
-							R.attr.bs_gridItemTitleTextAppearance});
+							R.attr.bs_gridItemTitleTextAppearance,R.attr.bs_showCapDivider});
 			try {
 				defaultListTextApperance = a.getResourceId(0, 0);
 				defaultGridTextApperance = a.getResourceId(1, 0);
+				showCapDivider = a.getBoolean(2, true);
 			} finally {
 				a.recycle();
 			}
@@ -677,6 +683,15 @@ public class BottomSheet extends Dialog implements DialogInterface {
 		public Builder title(@StringRes int titleRes) {
 			title = context.getText(titleRes);
 			return this;
+		}
+
+		public Builder showCapDivider(boolean show){
+			showCapDivider = show;
+			return this;
+		}
+
+		public boolean isShowCapDivider() {
+			return showCapDivider;
 		}
 
 		/**
