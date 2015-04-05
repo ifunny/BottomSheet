@@ -1,24 +1,16 @@
 package com.cocosw.bottomsheet;
 
 import android.annotation.TargetApi;
-import android.gesture.Gesture;
-import android.gesture.GestureUtils;
-import android.os.Build;
-import android.support.v4.view.GestureDetectorCompat;
-import android.support.v4.view.MotionEventCompat;
-import android.support.v4.view.ViewConfigurationCompat;
-import android.util.Log;
-import android.view.ViewConfiguration;
-import android.view.animation.Animation;
-import android.widget.AbsListView;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.content.Context;
+import android.os.Build;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AbsListView;
+import android.widget.FrameLayout;
 
 /**
  * Project: gradle
@@ -36,6 +28,12 @@ class ClosableSlidingLayout extends FrameLayout {
     private float mInitialMotionY;
     private static final int INVALID_POINTER = -1;
     View mTarget;
+    private boolean dismissed;
+
+    private boolean collapsible = false;
+    private float yDiff;
+
+    boolean swipeable = true;
 
     public ClosableSlidingLayout(Context context) {
         this(context, null);
@@ -49,7 +47,7 @@ class ClosableSlidingLayout extends FrameLayout {
     public ClosableSlidingLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         mDragHelper = ViewDragHelper.create(this, 0.8f, new ViewDragCallback());
-        MINVEL = getResources().getDisplayMetrics().density*400;
+        MINVEL = getResources().getDisplayMetrics().density * 400;
     }
 
     @Override
@@ -62,14 +60,18 @@ class ClosableSlidingLayout extends FrameLayout {
         }
 
         if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
-            mDragHelper.cancel();
             mActivePointerId = INVALID_POINTER;
             mIsBeingDragged = false;
+            if (collapsible && -yDiff > mDragHelper.getTouchSlop()) {
+                expand(mDragHelper.getCapturedView(), 0);
+            }
+            mDragHelper.cancel();
             return false;
         }
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
+                dismissed = false;
                 height = getChildAt(0).getHeight();
                 top = getChildAt(0).getTop();
                 mActivePointerId = MotionEventCompat.getPointerId(event, 0);
@@ -79,6 +81,7 @@ class ClosableSlidingLayout extends FrameLayout {
                     return false;
                 }
                 mInitialMotionY = initialMotionY;
+                yDiff = 0;
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (mActivePointerId == INVALID_POINTER) {
@@ -88,8 +91,8 @@ class ClosableSlidingLayout extends FrameLayout {
                 if (y == -1) {
                     return false;
                 }
-                final float yDiff = y - mInitialMotionY;
-                if (yDiff > mDragHelper.getTouchSlop() && !mIsBeingDragged) {
+                yDiff = y - mInitialMotionY;
+                if (swipeable && yDiff > mDragHelper.getTouchSlop() && !mIsBeingDragged) {
                     mIsBeingDragged = true;
                     mDragHelper.captureChildView(getChildAt(0), 0);
                 }
@@ -106,7 +109,7 @@ class ClosableSlidingLayout extends FrameLayout {
 
     /**
      * @return Whether it is possible for the child view of this layout to
-     *         scroll up. Override this if the child view is a custom view.
+     * scroll up. Override this if the child view is a custom view.
      */
     private boolean canChildScrollUp() {
         if (android.os.Build.VERSION.SDK_INT < 14) {
@@ -138,8 +141,10 @@ class ClosableSlidingLayout extends FrameLayout {
         }
 
         try {
-            mDragHelper.processTouchEvent(ev);
-        } catch (Exception ignored){}
+            if (swipeable)
+                mDragHelper.processTouchEvent(ev);
+        } catch (Exception ignored) {
+        }
         return true;
     }
 
@@ -150,14 +155,18 @@ class ClosableSlidingLayout extends FrameLayout {
         }
     }
 
-    public void setSlideListener(SlideListener listener){
+    public void setSlideListener(SlideListener listener) {
         mListener = listener;
     }
 
+    void setCollapsible(boolean collapsible) {
+        this.collapsible = collapsible;
+    }
+
     /**
-     *Callback
+     * Callback
      */
-    private class ViewDragCallback extends ViewDragHelper.Callback{
+    private class ViewDragCallback extends ViewDragHelper.Callback {
 
 
         @Override
@@ -167,24 +176,32 @@ class ClosableSlidingLayout extends FrameLayout {
 
         @Override
         public void onViewDragStateChanged(int state) {
-            //Is off the screen ?
-//            if (state == ViewDragHelper.STATE_IDLE && mDragHelper.getCapturedView().getLeft()!=0) {
-//                mListener.onClosed();
-//            }
+            if (mDragHelper.getViewDragState() == ViewDragHelper.STATE_IDLE && dismissed) {
+                if (mListener != null) {
+                    mListener.onClosed();
+                }
+            }
         }
 
         @Override
         public void onViewReleased(View releasedChild, float xvel, float yvel) {
+
+//            if (collapsible && ((yvel <-MINVEL)||releasedChild.getTop()<top)) {
+//                if (yvel <-MINVEL) {
+//                    expand(releasedChild, yvel);
+//                } else {
+//                    if (releasedChild.getTop() < top/2) {
+//                        expand(releasedChild, yvel);
+//                    } else {
+//                        mDragHelper.smoothSlideViewTo(releasedChild, 0, top);
+//                    }
+//                }
+//            } else
             if (yvel > MINVEL) {
-                dismiss(releasedChild);
-            } else if (yvel < -MINVEL) {
-             //   mDragHelper.smoothSlideViewTo(releasedChild, 0, -getHeight());
+                dismiss(releasedChild, yvel);
             } else {
-                if (releasedChild.getTop() >= top+height/2) {
-                    dismiss(releasedChild);
-//                } else if (releasedChild.getTop() < height / 2) {
-//                    mDragHelper
-//                            .smoothSlideViewTo(releasedChild, 0, -getHeight());
+                if (releasedChild.getTop() >= top + height / 2) {
+                    dismiss(releasedChild, yvel);
                 } else {
                     mDragHelper.smoothSlideViewTo(releasedChild, 0, top);
                 }
@@ -194,30 +211,40 @@ class ClosableSlidingLayout extends FrameLayout {
 
         @Override
         public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
-            if (Build.VERSION.SDK_INT<Build.VERSION_CODES.HONEYCOMB) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
                 invalidate();
             }
         }
 
         @Override
         public int clampViewPositionVertical(View child, int top, int dy) {
+//            if (collapsible) {
+//                return top;
+//            } else
             return Math.max(top, ClosableSlidingLayout.this.top);
         }
     }
 
-    private void dismiss(View view) {
-        if (mListener!=null) mListener.onClosed();
-
-        mDragHelper.abort();
-        ViewCompat.postInvalidateOnAnimation(ClosableSlidingLayout.this);
-
+    private void expand(View releasedChild, float yvel) {
+        if (mListener != null) {
+            mListener.onOpened();
+        }
     }
+
+    private void dismiss(View view, float yvel) {
+        mDragHelper.smoothSlideViewTo(view, 0, top + height);
+        mDragHelper.cancel();
+        dismissed = true;
+        ViewCompat.postInvalidateOnAnimation(ClosableSlidingLayout.this);
+    }
+
 
     /**
      * set listener
      */
-    interface SlideListener{
+    interface SlideListener {
         void onClosed();
+
         void onOpened();
     }
 

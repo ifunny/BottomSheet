@@ -1,5 +1,6 @@
 BottomSheet
 =======
+[![Build Status](https://travis-ci.org/soarcn/BottomSheet.svg)](https://travis-ci.org/soarcn/BottomSheet) [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-BottomSheet-brightgreen.svg?style=flat)](https://android-arsenal.com/details/1/1044)
 
 One way to present a set of actions to a user is with bottom sheets, a sheet of paper that slides up from the bottom edge of the screen. Bottom sheets offer flexibility in the display of clear and simple actions that do not need explanation.
 
@@ -12,6 +13,7 @@ This library works on android 2.1+
 ![Sample](https://github.com/soarcn/BottomSheet/blob/master/art/image2.png?raw=true)
 ![Sample](https://github.com/soarcn/BottomSheet/blob/master/art/image3.png?raw=true)
 ![Sample](https://github.com/soarcn/BottomSheet/blob/master/art/image4.png?raw=true)
+![Sample](https://github.com/soarcn/BottomSheet/blob/master/art/image5.png?raw=true)
 
 How to use this library
 =======
@@ -20,13 +22,25 @@ How to use this library
 - Using Gradle
 
 ```groovy
-    compile 'com.cocosw:bottomsheet:0.+@aar' 
+    compile 'com.cocosw:bottomsheet:1.+@aar'
 ```
+- Using Maven
+
+```xml
+<dependency>
+    <groupId>com.cocosw</groupId>
+    <artifactId>bottomsheet</artifactId>
+    <version>1.x</version>
+    <type>apklib</type>
+</dependency>
+```
+
+- Compile you project with android sdk v21+
 
 API
 =======
 
-- Define actions in menu xml
+- Define actions in menu xml (only id/title/icon attribution been supported right now)
 
 ```xml
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
@@ -39,7 +53,7 @@ API
 
 ```
 
-- Call it just like you call a dialog
+- Call it just like you calling a dialog
 
 ```java
 new BottomSheet.Builder(this).title("title").sheet(R.menu.list).listener(new DialogInterface.OnClickListener() {
@@ -71,10 +85,9 @@ Style
         <item name="android:textColorSecondary">#8Affffff</item>
         <item name="android:textColorHint">#42ffffff</item>
         <item name="bs_dialogBackground">@color/abc_search_url_text_normal</item>
-        <item name="bs_listSelector">@drawable/list_selector</item>
-        <item name="bs_drawSelectorOnTop">false</item>
         <item name="bs_dividerColor">@color/abc_search_url_text_pressed</item>
         <item name="bs_numColumns">4</item>
+        <item name="bs_listStyle">@style/BottomSheet.StyleList</item>
     </style>
 ```
 - Or set bottomesheet style in your activity theme
@@ -90,16 +103,16 @@ Contribute
 
 - Feel free to fork it
 
-TODO
+About me
 =======
-- (support) DialogFragment
-- Fullscreen mode
-- swipe up to pull up
+
+I'm Kai, an 32 years old android developer based in Sydney. I'm looking for a job right now, contact me if you think I can be of service to you. Thanks!
+
 
 License
 =======
 
-    Copyright 2011, 2014 Liao Kai
+    Copyright 2011, 2015 Kai Liao
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
