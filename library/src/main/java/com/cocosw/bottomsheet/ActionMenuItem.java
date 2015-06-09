@@ -22,7 +22,6 @@ import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.internal.view.SupportMenuItem;
 import android.support.v4.view.MenuItemCompat;
-import android.view.ActionProvider;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.SubMenu;
@@ -45,6 +44,7 @@ import android.view.View;
 
      private Drawable mIconDrawable;
      private int mIconResId = NO_ICON;
+     private int textAppearance;
 
      private Context mContext;
 
@@ -60,13 +60,19 @@ import android.view.View;
      private static final int ENABLED = 0x00000010;
 
      public ActionMenuItem(Context context, int group, int id, int categoryOrder, int ordering,
-                           CharSequence title) {
+                           CharSequence title){
+         this(context, group, id, categoryOrder, ordering, title,0);
+     }
+
+     public ActionMenuItem(Context context, int group, int id, int categoryOrder, int ordering,
+                           CharSequence title,int textAppearance) {
          mContext = context;
          mId = id;
          mGroup = group;
          mCategoryOrder = categoryOrder;
          mOrdering = ordering;
          mTitle = title;
+         this.textAppearance = textAppearance;
      }
 
      public char getAlphabeticShortcut() {
@@ -156,6 +162,14 @@ import android.view.View;
      public MenuItem setEnabled(boolean enabled) {
          mFlags = (mFlags & ~ENABLED) | (enabled ? ENABLED : 0);
          return this;
+     }
+
+     public int getTextAppearance() {
+         return textAppearance;
+     }
+
+     public void setTextAppearance(int textAppearance) {
+         this.textAppearance = textAppearance;
      }
 
      public MenuItem setIcon(Drawable icon) {

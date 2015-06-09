@@ -352,7 +352,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
             }
 
             @Override
-            public MenuItem getItem(int position) {
+            public ActionMenuItem getItem(int position) {
                 return actions.getItem(position);
             }
 
@@ -399,7 +399,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
                         position++;
                 }
 
-                MenuItem item = getItem(position);
+                ActionMenuItem item = getItem(position);
 
                 holder.title.setText(item.getTitle());
                 if (item.getIcon() == null)
@@ -407,6 +407,10 @@ public class BottomSheet extends Dialog implements DialogInterface {
                 else {
                     holder.image.setVisibility(View.VISIBLE);
                     holder.image.setImageDrawable(item.getIcon());
+                }
+
+                if (item.getTextAppearance() >0){
+                    holder.title.setTextAppearance(getContext(),item.getTextAppearance());
                 }
 
                 holder.image.setEnabled(item.isEnabled());
@@ -664,6 +668,13 @@ public class BottomSheet extends Dialog implements DialogInterface {
          */
         public Builder sheet(int id, @DrawableRes int iconRes, @StringRes int textRes) {
             ActionMenuItem item = new ActionMenuItem(context, 0, id, 0, 0, context.getText(textRes));
+            item.setIcon(iconRes);
+            menu.add(item);
+            return this;
+        }
+
+        public Builder sheet(int id, @DrawableRes int iconRes, @StringRes int textRes,@StyleRes int textAppearance) {
+            ActionMenuItem item = new ActionMenuItem(context, 0, id, 0, 0, context.getText(textRes),textAppearance);
             item.setIcon(iconRes);
             menu.add(item);
             return this;

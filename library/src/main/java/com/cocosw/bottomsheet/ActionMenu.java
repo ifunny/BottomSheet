@@ -16,10 +16,6 @@
 
 package com.cocosw.bottomsheet;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -27,9 +23,12 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.support.v4.internal.view.SupportMenu;
 import android.view.KeyEvent;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @hide
@@ -184,11 +183,11 @@ import android.view.SubMenu;
         return -1;
     }
 
-    public MenuItem findItem(int id) {
+    public ActionMenuItem findItem(int id) {
         return mItems.get(findItemIndex(id));
     }
 
-    public MenuItem getItem(int index) {
+    public ActionMenuItem getItem(int index) {
         return mItems.get(index);
     }
 
