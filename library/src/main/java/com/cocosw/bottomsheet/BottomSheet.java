@@ -680,6 +680,13 @@ public class BottomSheet extends Dialog implements DialogInterface {
             return this;
         }
 
+        public Builder sheet(int id, Drawable drawable, @StringRes int textRes,@StyleRes int textAppearance) {
+            ActionMenuItem item = new ActionMenuItem(context, 0, id, 0, 0, context.getText(textRes),textAppearance);
+            item.setIcon(drawable);
+            menu.add(item);
+            return this;
+        }
+
         /**
          * Add one item into BottomSheet
          *
