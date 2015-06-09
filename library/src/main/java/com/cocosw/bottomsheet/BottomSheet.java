@@ -609,7 +609,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
 
         private final Context context;
         private int theme;
-        private final ActionMenu menu;
+        protected final ActionMenu menu;
         private CharSequence title;
         private boolean grid;
         private OnClickListener listener;
@@ -829,6 +829,10 @@ public class BottomSheet extends Dialog implements DialogInterface {
         public Builder limit(@IntegerRes int limitRes) {
             limit = context.getResources().getInteger(limitRes);
             return this;
+        }
+
+        public int size() {
+            return menu.size();
         }
 
 
