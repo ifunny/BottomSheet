@@ -79,6 +79,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
     private boolean collapseListIcons;
     private int mStatusBarHeight;
     private GridView list;
+    private boolean topDivider;
     private SimpleSectionedGridAdapter adapter;
     private Builder builder;
 
@@ -120,6 +121,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
             close = a.getDrawable(R.styleable.BottomSheet_bs_closeDrawable);
             moreText = a.getString(R.styleable.BottomSheet_bs_moreText);
             collapseListIcons = a.getBoolean(R.styleable.BottomSheet_bs_collapseListIcons, true);
+	        topDivider = a.getBoolean(R.styleable.BottomSheet_bs_showTopDivider,true);
         } finally {
             a.recycle();
         }
@@ -309,6 +311,8 @@ public class BottomSheet extends Dialog implements DialogInterface {
 
         icon = (ImageView) mDialogView.findViewById(R.id.bottom_sheet_title_image);
 
+	    View topDividerView = mDialogView.findViewById(R.id.topDivider);
+	    topDividerView.setVisibility(topDivider ? View.VISIBLE : View.GONE);
 
         list = (GridView) mDialogView.findViewById(R.id.bottom_sheet_gridview);
         mDialogView.mTarget = list;

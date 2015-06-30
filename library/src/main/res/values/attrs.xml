@@ -10,7 +10,7 @@
         <attr name="bs_titleTextAppearance" format="reference" />
         <attr name="bs_listItemTitleTextAppearance" format="reference" />
         <attr name="bs_gridItemTitleTextAppearance" format="reference" />
-        <attr name="bs_showCapDivider" format="boolean" />
+        <attr name="bs_showTopDivider" format="boolean" />
         <attr name="bs_moreDrawable" format="reference"/>
         <attr name="bs_moreText" format="string"/>
         <attr name="bs_closeDrawable" format="reference"/>
