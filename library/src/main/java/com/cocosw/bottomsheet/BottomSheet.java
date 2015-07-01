@@ -80,6 +80,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
     private int mStatusBarHeight;
     private GridView list;
     private boolean topDivider;
+    private boolean hideStatusBar;
     private SimpleSectionedGridAdapter adapter;
     private Builder builder;
 
@@ -122,6 +123,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
             moreText = a.getString(R.styleable.BottomSheet_bs_moreText);
             collapseListIcons = a.getBoolean(R.styleable.BottomSheet_bs_collapseListIcons, true);
 	        topDivider = a.getBoolean(R.styleable.BottomSheet_bs_showTopDivider,true);
+	        hideStatusBar = a.getBoolean(R.styleable.BottomSheet_bs_hideStatusBar,false);
         } finally {
             a.recycle();
         }
@@ -293,6 +295,9 @@ public class BottomSheet extends Dialog implements DialogInterface {
                     icon.setVisibility(View.VISIBLE);
                     icon.setImageDrawable(builder.icon);
                 }
+                if (hideStatusBar){
+                    getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+                }
             }
         });
         int[] location = new int[2];
@@ -455,7 +460,17 @@ public class BottomSheet extends Dialog implements DialogInterface {
         });
 
         if (builder.dismissListener != null) {
-            setOnDismissListener(builder.dismissListener);
+            setOnDismissListener(new OnDismissListener() {
+	            @Override
+	            public void onDismiss(DialogInterface dialog) {
+		            if (hideStatusBar){
+			            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+			            if (builder.dismissListener !=null){
+				            builder.dismissListener.onDismiss(dialog);
+			            }
+		            }
+	            }
+            });
         }
         setListLayout();
     }
