@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.support.annotation.VisibleForTesting;
 import android.support.v4.internal.view.SupportMenu;
 import android.view.KeyEvent;
 import android.view.MenuItem;
@@ -30,10 +31,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @hide
- */
- class ActionMenu implements SupportMenu {
+
+@VisibleForTesting
+class ActionMenu implements SupportMenu {
     private Context mContext;
 
     private boolean mIsQwerty;
@@ -89,7 +89,7 @@ import java.util.List;
     }
 
     MenuItem add(ActionMenuItem item) {
-        mItems.add(findInsertIndex(mItems, getOrdering(item.getOrder())),item);
+        mItems.add(findInsertIndex(mItems, getOrdering(item.getOrder())), item);
         return item;
     }
 
@@ -99,10 +99,10 @@ import java.util.List;
      * categories, and combine it with the lower bits.
      *
      * @param categoryOrder The category order for a particular item (if it has
-     *            not been or/add with a category, the default category is
-     *            assumed).
+     *                      not been or/add with a category, the default category is
+     *                      assumed).
      * @return An ordering integer that can be used to order this item across
-     *         all the items (even from other categories).
+     * all the items (even from other categories).
      */
     private static int getOrdering(int categoryOrder) {
         final int index = (categoryOrder & CATEGORY_MASK) >> CATEGORY_SHIFT;
@@ -126,7 +126,7 @@ import java.util.List;
             removeGroup(groupId);
         }
 
-        for (int i=0; i<N; i++) {
+        for (int i = 0; i < N; i++) {
             final ResolveInfo ri = lri.get(i);
             Intent rintent = new Intent(
                     ri.specificIndex < 0 ? intent : specifics[ri.specificIndex]);
@@ -183,11 +183,11 @@ import java.util.List;
         return -1;
     }
 
-    public ActionMenuItem findItem(int id) {
+    public MenuItem findItem(int id) {
         return mItems.get(findItemIndex(id));
     }
 
-    public ActionMenuItem getItem(int index) {
+    public MenuItem getItem(int index) {
         return mItems.get(index);
     }
 
@@ -309,7 +309,7 @@ import java.util.List;
 
     ActionMenu clone(int size) {
         ActionMenu out = new ActionMenu(getContext());
-        out.mItems = new ArrayList<>(this.mItems.subList(0,size));
+        out.mItems = new ArrayList<>(this.mItems.subList(0, size));
         return out;
     }
 
@@ -317,7 +317,7 @@ import java.util.List;
         Iterator<ActionMenuItem> iter = mItems.iterator();
         while (iter.hasNext()) {
             ActionMenuItem item = iter.next();
-                if (!item.isVisible()) iter.remove();
+            if (!item.isVisible()) iter.remove();
         }
     }
 }
