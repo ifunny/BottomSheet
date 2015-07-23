@@ -58,19 +58,19 @@ class ActionMenu implements SupportMenu {
         return mContext;
     }
 
-    public MenuItem add(CharSequence title) {
+    public ActionMenuItem add(CharSequence title) {
         return add(0, 0, 0, title);
     }
 
-    public MenuItem add(int titleRes) {
+    public ActionMenuItem add(int titleRes) {
         return add(0, 0, 0, titleRes);
     }
 
-    public MenuItem add(int groupId, int itemId, int order, int titleRes) {
+    public ActionMenuItem add(int groupId, int itemId, int order, int titleRes) {
         return add(groupId, itemId, order, mContext.getResources().getString(titleRes));
     }
 
-    public MenuItem add(int groupId, int itemId, int order, CharSequence title) {
+    public ActionMenuItem add(int groupId, int itemId, int order, CharSequence title) {
         ActionMenuItem item = new ActionMenuItem(getContext(),
                 groupId, itemId, 0, order, title);
         mItems.add(findInsertIndex(mItems, getOrdering(order)), item);
@@ -88,7 +88,7 @@ class ActionMenu implements SupportMenu {
         return 0;
     }
 
-    MenuItem add(ActionMenuItem item) {
+    ActionMenuItem add(ActionMenuItem item) {
         mItems.add(findInsertIndex(mItems, getOrdering(item.getOrder())), item);
         return item;
     }
@@ -183,11 +183,11 @@ class ActionMenu implements SupportMenu {
         return -1;
     }
 
-    public MenuItem findItem(int id) {
+    public ActionMenuItem findItem(int id) {
         return mItems.get(findItemIndex(id));
     }
 
-    public MenuItem getItem(int index) {
+    public ActionMenuItem getItem(int index) {
         return mItems.get(index);
     }
 
