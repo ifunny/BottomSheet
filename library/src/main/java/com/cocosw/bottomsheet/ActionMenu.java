@@ -21,7 +21,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.support.annotation.VisibleForTesting;
 import android.support.v4.internal.view.SupportMenu;
 import android.view.KeyEvent;
 import android.view.MenuItem;
@@ -31,13 +30,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-
-@VisibleForTesting
 class ActionMenu implements SupportMenu {
-    private Context mContext;
-
-    private boolean mIsQwerty;
-
     private static final int[] sCategoryToOrder = new int[]{
             1, /* No category */
             4, /* CONTAINER */
@@ -46,7 +39,8 @@ class ActionMenu implements SupportMenu {
             2, /* ALTERNATIVE */
             0, /* SELECTED_ALTERNATIVE */
     };
-
+    private Context mContext;
+    private boolean mIsQwerty;
     private ArrayList<ActionMenuItem> mItems;
 
     public ActionMenu(Context context) {
@@ -76,7 +70,6 @@ class ActionMenu implements SupportMenu {
         mItems.add(findInsertIndex(mItems, getOrdering(order)), item);
         return item;
     }
-
 
     private static int findInsertIndex(ArrayList<ActionMenuItem> items, int ordering) {
         for (int i = items.size() - 1; i >= 0; i--) {
@@ -184,7 +177,12 @@ class ActionMenu implements SupportMenu {
     }
 
     public ActionMenuItem findItem(int id) {
-        return mItems.get(findItemIndex(id));
+        final int index = findItemIndex(id);
+        if (index < 0) {
+            return null;
+        }
+
+        return mItems.get(index);
     }
 
     public ActionMenuItem getItem(int index) {
@@ -258,7 +256,12 @@ class ActionMenu implements SupportMenu {
     }
 
     public void removeItem(int id) {
-        mItems.remove(findItemIndex(id));
+        final int index = findItemIndex(id);
+        if (index < 0) {
+            return;
+        }
+
+        mItems.remove(index);
     }
 
     public void setGroupCheckable(int group, boolean checkable,

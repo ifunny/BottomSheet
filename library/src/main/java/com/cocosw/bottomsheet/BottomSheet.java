@@ -17,13 +17,10 @@
 package com.cocosw.bottomsheet;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -37,7 +34,6 @@ import android.support.annotation.StyleRes;
 import android.transition.ChangeBounds;
 import android.transition.Transition;
 import android.transition.TransitionManager;
-import android.util.DisplayMetrics;
 import android.util.SparseIntArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -45,10 +41,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
@@ -58,7 +52,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 
@@ -73,30 +66,22 @@ import java.util.ArrayList;
 @SuppressWarnings("unused")
 public class BottomSheet extends Dialog implements DialogInterface {
 
+    private final SparseIntArray hidden = new SparseIntArray();
+
+    private TranslucentHelper helper;
     private String moreText;
     private Drawable close;
     private Drawable more;
+    private int mHeaderLayoutId;
+    private int mListItemLayoutId;
+    private int mGridItemLayoutId;
+
     private boolean collapseListIcons;
-    private int mStatusBarHeight;
     private GridView list;
     private boolean topDivider;
     private boolean hideStatusBar;
     private SimpleSectionedGridAdapter adapter;
     private Builder builder;
-
-    private final SparseIntArray hidden = new SparseIntArray();
-
-    // translucent support
-    private static final String STATUS_BAR_HEIGHT_RES_NAME = "status_bar_height";
-    private static final String NAV_BAR_HEIGHT_RES_NAME = "navigation_bar_height";
-    private static final String NAV_BAR_HEIGHT_LANDSCAPE_RES_NAME = "navigation_bar_height_landscape";
-    private static final String SHOW_NAV_BAR_RES_NAME = "config_showNavigationBar";
-    private boolean mInPortrait;
-    private String sNavBarOverride;
-    private boolean mNavBarAvailable;
-    private float mSmallestWidthDp;
-
-
     private ImageView icon;
 
     private int limit = -1;
@@ -106,6 +91,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
     private ActionMenu menuItem;
     private ActionMenu actions;
     private OnDismissListener dismissListener;
+    private OnShowListener showListener;
 
     BottomSheet(Context context) {
         super(context, R.style.BottomSheet_Dialog);
@@ -124,117 +110,17 @@ public class BottomSheet extends Dialog implements DialogInterface {
             collapseListIcons = a.getBoolean(R.styleable.BottomSheet_bs_collapseListIcons, true);
 	        topDivider = a.getBoolean(R.styleable.BottomSheet_bs_showTopDivider,true);
 	        hideStatusBar = a.getBoolean(R.styleable.BottomSheet_bs_hideStatusBar,false);
+            mHeaderLayoutId = a.getResourceId(R.styleable.BottomSheet_bs_headerLayout, R.layout.bs_header);
+            mListItemLayoutId = a.getResourceId(R.styleable.BottomSheet_bs_listItemLayout, R.layout.bs_list_entry);
+            mGridItemLayoutId = a.getResourceId(R.styleable.BottomSheet_bs_gridItemLayout, R.layout.bs_grid_entry);
         } finally {
             a.recycle();
         }
 
         // https://github.com/jgilfelt/SystemBarTint/blob/master/library/src/com/readystatesoftware/systembartint/SystemBarTintManager.java
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-            mInPortrait = (context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT);
-            try {
-                Class c = Class.forName("android.os.SystemProperties");
-                @SuppressWarnings("unchecked") Method m = c.getDeclaredMethod("get", String.class);
-                m.setAccessible(true);
-                sNavBarOverride = (String) m.invoke(null, "qemu.hw.mainkeys");
-            } catch (Throwable e) {
-                sNavBarOverride = null;
-            }
-
-            // check theme attrs
-            int[] as = {android.R.attr.windowTranslucentNavigation};
-            a = context.obtainStyledAttributes(as);
-            try {
-                mNavBarAvailable = a.getBoolean(0, false);
-            } finally {
-                a.recycle();
-            }
-
-            // check window flags
-            WindowManager.LayoutParams winParams = ((Activity) context).getWindow().getAttributes();
-
-            int bits = WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION;
-            if ((winParams.flags & bits) != 0) {
-                mNavBarAvailable = true;
-            }
-
-            mSmallestWidthDp = getSmallestWidthDp(wm);
-            if (mNavBarAvailable)
-                setTranslucentStatus(true);
-            mStatusBarHeight = getInternalDimensionSize(context.getResources(), STATUS_BAR_HEIGHT_RES_NAME);
+            helper = new TranslucentHelper(this, context);
         }
-    }
-
-    @SuppressLint("NewApi")
-    private float getSmallestWidthDp(WindowManager wm) {
-        DisplayMetrics metrics = new DisplayMetrics();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            wm.getDefaultDisplay().getRealMetrics(metrics);
-        } else {
-            //this is not correct, but we don't really care pre-kitkat
-            wm.getDefaultDisplay().getMetrics(metrics);
-        }
-        float widthDp = metrics.widthPixels / metrics.density;
-        float heightDp = metrics.heightPixels / metrics.density;
-        return Math.min(widthDp, heightDp);
-    }
-
-    @TargetApi(14)
-    private int getNavigationBarHeight(Context context) {
-        Resources res = context.getResources();
-        int result = 0;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            if (hasNavBar(context)) {
-                String key;
-                if (mInPortrait) {
-                    key = NAV_BAR_HEIGHT_RES_NAME;
-                } else {
-                    if (!isNavigationAtBottom())
-                        return 0;
-                    key = NAV_BAR_HEIGHT_LANDSCAPE_RES_NAME;
-                }
-                return getInternalDimensionSize(res, key);
-            }
-        }
-        return result;
-    }
-
-    @TargetApi(14)
-    private boolean hasNavBar(Context context) {
-        Resources res = context.getResources();
-        int resourceId = res.getIdentifier(SHOW_NAV_BAR_RES_NAME, "bool", "android");
-        if (resourceId != 0) {
-            boolean hasNav = res.getBoolean(resourceId);
-            // check override flag (see static block)
-            if ("1".equals(sNavBarOverride)) {
-                hasNav = false;
-            } else if ("0".equals(sNavBarOverride)) {
-                hasNav = true;
-            }
-            return hasNav;
-        } else { // fallback
-            return !ViewConfiguration.get(context).hasPermanentMenuKey();
-        }
-    }
-
-    private int getInternalDimensionSize(Resources res, String key) {
-        int result = 0;
-        int resourceId = res.getIdentifier(key, "dimen", "android");
-        if (resourceId > 0) {
-            result = res.getDimensionPixelSize(resourceId);
-        }
-        return result;
-    }
-
-    /**
-     * Should a navigation bar appear at the bottom of the screen in the current
-     * device configuration? A navigation bar may appear on the right side of
-     * the screen in certain configurations.
-     *
-     * @return True if navigation should appear at the bottom of the screen, False otherwise.
-     */
-    private boolean isNavigationAtBottom() {
-        return (mSmallestWidthDp >= 600 || mInPortrait);
     }
 
     /**
@@ -265,9 +151,16 @@ public class BottomSheet extends Dialog implements DialogInterface {
         cancelOnSwipeDown = cancel;
     }
 
+    @Override
+    public void setOnShowListener(OnShowListener listener) {
+        this.showListener = listener;
+    }
+
     private void init(final Context context) {
         setCanceledOnTouchOutside(cancelOnTouchOutside);
         final ClosableSlidingLayout mDialogView = (ClosableSlidingLayout) View.inflate(context, R.layout.bottom_sheet_dialog, null);
+        LinearLayout mainLayout = (LinearLayout) mDialogView.findViewById(R.id.bs_main);
+        mainLayout.addView(View.inflate(context, mHeaderLayoutId, null), 0);
         setContentView(mDialogView);
         if (!cancelOnSwipeDown)
             mDialogView.swipeable = cancelOnSwipeDown;
@@ -283,10 +176,11 @@ public class BottomSheet extends Dialog implements DialogInterface {
             }
         });
 
-
-        this.setOnShowListener(new OnShowListener() {
+        super.setOnShowListener(new OnShowListener() {
             @Override
             public void onShow(DialogInterface dialogInterface) {
+                if (showListener != null)
+                    showListener.onShow(dialogInterface);
                 list.setAdapter(adapter);
                 list.startLayoutAnimation();
                 if (builder.icon == null)
@@ -304,8 +198,8 @@ public class BottomSheet extends Dialog implements DialogInterface {
         mDialogView.getLocationOnScreen(location);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            mDialogView.setPadding(0, location[0] == 0 ? mStatusBarHeight : 0, 0, 0);
-            mDialogView.getChildAt(0).setPadding(0, 0, 0, mNavBarAvailable ? getNavigationBarHeight(getContext()) + mDialogView.getPaddingBottom() : 0);
+            mDialogView.setPadding(0, location[0] == 0 ? helper.mStatusBarHeight : 0, 0, 0);
+            mDialogView.getChildAt(0).setPadding(0, 0, 0, helper.mNavBarAvailable ? helper.getNavigationBarHeight(getContext()) + mDialogView.getPaddingBottom() : 0);
         }
 
         final TextView title = (TextView) mDialogView.findViewById(R.id.bottom_sheet_title);
@@ -318,7 +212,6 @@ public class BottomSheet extends Dialog implements DialogInterface {
 
 	    View topDividerView = mDialogView.findViewById(R.id.topDivider);
 	    topDividerView.setVisibility(topDivider ? View.VISIBLE : View.GONE);
-
         list = (GridView) mDialogView.findViewById(R.id.bottom_sheet_gridview);
         mDialogView.mTarget = list;
         if (!builder.grid) {
@@ -353,7 +246,6 @@ public class BottomSheet extends Dialog implements DialogInterface {
         }
 
         BaseAdapter baseAdapter = new BaseAdapter() {
-
 
             @Override
             public int getCount() {
@@ -392,9 +284,9 @@ public class BottomSheet extends Dialog implements DialogInterface {
                     LayoutInflater inflater = (LayoutInflater) getContext()
                             .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                     if (builder.grid)
-                        convertView = inflater.inflate(R.layout.bs_grid_entry, parent, false);
+                        convertView = inflater.inflate(mGridItemLayoutId, parent, false);
                     else
-                        convertView = inflater.inflate(R.layout.bs_list_entry, parent, false);
+                        convertView = inflater.inflate(mListItemLayoutId, parent, false);
                     holder = new ViewHolder();
                     holder.title = (TextView) convertView.findViewById(R.id.bs_list_title);
                     holder.image = (ImageView) convertView.findViewById(R.id.bs_list_image);
@@ -437,8 +329,6 @@ public class BottomSheet extends Dialog implements DialogInterface {
         adapter = new SimpleSectionedGridAdapter(context, baseAdapter, R.layout.bs_list_divider, R.id.headerlayout, R.id.header);
         list.setAdapter(adapter);
         adapter.setGridView(list);
-
-        updateSection();
 
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -533,6 +423,12 @@ public class BottomSheet extends Dialog implements DialogInterface {
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        showShortItems();
+    }
+
     private boolean hasDivider() {
         return adapter.mSections.size() > 0;
     }
@@ -585,23 +481,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
         getWindow().setAttributes(params);
     }
 
-    @SuppressWarnings("SameParameterValue")
-    @TargetApi(19)
-    private void setTranslucentStatus(boolean on) {
-        Window win = getWindow();
-        WindowManager.LayoutParams winParams = win.getAttributes();
-        final int bits = WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;
-        if (on) {
-            winParams.flags |= bits;
-        } else {
-            winParams.flags &= ~bits;
-        }
 
-        win.setAttributes(winParams);
-        // instance
-        win.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
-                WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-    }
 
     public Menu getMenu() {
         return builder.menu;
@@ -627,8 +507,8 @@ public class BottomSheet extends Dialog implements DialogInterface {
     public static class Builder {
 
         private final Context context;
+        private final ActionMenu menu;
         private int theme;
-        protected final ActionMenu menu;
         private CharSequence title;
         private boolean grid;
         private OnClickListener listener;
