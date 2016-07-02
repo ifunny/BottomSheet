@@ -91,6 +91,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
     private ActionMenu menuItem;
     private ActionMenu actions;
     private OnDismissListener dismissListener;
+    private OnCancelListener cancelListener;
     private OnShowListener showListener;
 
     BottomSheet(Context context) {
@@ -350,17 +351,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
         });
 
         if (builder.dismissListener != null) {
-            setOnDismissListener(new OnDismissListener() {
-	            @Override
-	            public void onDismiss(DialogInterface dialog) {
-		            if (hideStatusBar){
-			            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-			            if (builder.dismissListener !=null){
-				            builder.dismissListener.onDismiss(dialog);
-			            }
-		            }
-	            }
-            });
+            setOnDismissListener(builder.dismissListener);
         }
         setListLayout();
     }
@@ -474,8 +465,20 @@ public class BottomSheet extends Dialog implements DialogInterface {
             public void onDismiss(DialogInterface dialog) {
                 if (dismissListener != null)
                     dismissListener.onDismiss(dialog);
-                if (limit != Integer.MAX_VALUE)
+                if (limit != Integer.MAX_VALUE) {
                     showShortItems();
+                }
+                if (hideStatusBar){
+                    getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+                }
+            }
+        });
+        super.setOnCancelListener(new OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                if (cancelListener != null){
+                    cancelListener.onCancel(dialog);
+                }
             }
         });
         getWindow().setAttributes(params);
@@ -501,6 +504,11 @@ public class BottomSheet extends Dialog implements DialogInterface {
         this.dismissListener = listener;
     }
 
+    @Override
+    public void setOnCancelListener(OnCancelListener listener) {
+        this.cancelListener = listener;
+    }
+
     /**
      * Constructor using a context for this builder and the {@link com.cocosw.bottomsheet.BottomSheet} it creates.
      */
@@ -513,6 +521,7 @@ public class BottomSheet extends Dialog implements DialogInterface {
         private boolean grid;
         private OnClickListener listener;
         private OnDismissListener dismissListener;
+        private OnCancelListener cancelListener;
         private Drawable icon;
         private int limit = -1;
         private MenuItem.OnMenuItemClickListener menulistener;
@@ -773,6 +782,11 @@ public class BottomSheet extends Dialog implements DialogInterface {
          */
         public Builder setOnDismissListener(@NonNull OnDismissListener listener) {
             this.dismissListener = listener;
+            return this;
+        }
+
+        public Builder setOnCancelListener(@NonNull OnCancelListener cancelListener) {
+            this.cancelListener = cancelListener;
             return this;
         }
     }
