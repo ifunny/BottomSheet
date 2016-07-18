@@ -353,6 +353,10 @@ public class BottomSheet extends Dialog implements DialogInterface {
         if (builder.dismissListener != null) {
             setOnDismissListener(builder.dismissListener);
         }
+
+        if (builder.cancelListener != null) {
+            setOnCancelListener(builder.cancelListener);
+        }
         setListLayout();
     }
 
