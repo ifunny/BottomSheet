@@ -1,2 +1,2 @@
-include 'library'
-include 'example'
+include ':BottomSheet'
+project(':BottomSheet').projectDir = new File('library')

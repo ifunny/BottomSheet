@@ -1,26 +1,29 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+
+group = 'com.github.ifunny'
 
 repositories {
-    mavenCentral()
+	jcenter()
 }
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
+	compileSdkVersion 23
+	buildToolsVersion '24.0.1'
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
-    }
+	compileOptions {
+		sourceCompatibility JavaVersion.VERSION_1_7
+		targetCompatibility JavaVersion.VERSION_1_7
+	}
 
-    defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion rootProject.ext.compileSdkVersion
-    }
+	defaultConfig {
+		minSdkVersion 14
+		targetSdkVersion 23
+	}
 
 }
 
 dependencies {
-    compile rootProject.ext.supportPackageVersion
+	compile "com.android.support:support-v4:23.4.0"
 }
 
